@@ -1,0 +1,7 @@
+directory:
+  - terraform
+framework:
+  - terraform
+compact: true
+quiet: false
+download-external-modules: false

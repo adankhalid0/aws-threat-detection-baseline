@@ -1,0 +1,5 @@
+# Copy this file to terraform.tfvars and fill in your own values.
+# terraform.tfvars must NEVER be committed to git (it's listed in .gitignore).
+
+region      = "eu-north-1"
+alert_email = "you@example.com"
