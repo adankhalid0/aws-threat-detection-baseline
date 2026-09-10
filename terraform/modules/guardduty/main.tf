@@ -9,6 +9,11 @@
 # building and auditing configuration (is the account set up correctly).
 # This one is about noticing when something is actively going wrong.
 
+# checkov:skip=CKV2_AWS_3: This is a standalone AWS account, not part of an
+# AWS Organization, so org-wide GuardDuty enablement (via
+# aws_guardduty_organization_configuration) doesn't apply here. Enabling
+# GuardDuty directly on the account via this detector resource is the
+# correct and complete setup for a single, non-org account.
 resource "aws_guardduty_detector" "this" {
   enable                       = true
   finding_publishing_frequency = var.finding_publishing_frequency
