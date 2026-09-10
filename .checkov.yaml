@@ -5,3 +5,13 @@ framework:
 compact: true
 quiet: false
 download-external-modules: false
+
+# CKV2_AWS_3 checks that GuardDuty is enabled org-wide via AWS
+# Organizations (aws_guardduty_organization_configuration). This project
+# targets a single, standalone AWS account with no AWS Organization, where
+# GuardDuty is enabled directly on the account via aws_guardduty_detector
+# -- the correct and complete setup for that context. The org-wide check
+# doesn't apply here, so it's explicitly skipped rather than silently
+# failing CI.
+skip-check:
+  - CKV2_AWS_3
