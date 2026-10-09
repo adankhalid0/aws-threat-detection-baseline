@@ -4,9 +4,53 @@
 # "we have a detection tool enabled" into "we get notified when it
 # fires" -- the gap a lot of portfolio projects skip.
 
+data "aws_caller_identity" "current" {}
+
+# Customer-managed key for the alerts topic. The AWS-managed key
+# (alias/aws/sns) cannot be used here: its key policy does not allow
+# EventBridge, so events are silently rejected when they are delivered
+# to an encrypted topic.
+data "aws_iam_policy_document" "alerts_kms" {
+  statement {
+    sid       = "EnableAccountAdministration"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "AllowEventBridgeToUseKey"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_kms_key" "alerts" {
+  description             = "Encrypts the security alerts SNS topic and lets EventBridge publish to it."
+  enable_key_rotation     = true
+  deletion_window_in_days = 7
+  policy                  = data.aws_iam_policy_document.alerts_kms.json
+}
+
+resource "aws_kms_alias" "alerts" {
+  name          = "alias/${var.name_prefix}-security-alerts"
+  target_key_id = aws_kms_key.alerts.key_id
+}
+
 resource "aws_sns_topic" "security_alerts" {
   name              = "${var.name_prefix}-security-alerts"
-  kms_master_key_id = "alias/aws/sns"
+  kms_master_key_id = aws_kms_key.alerts.arn
 }
 
 data "aws_iam_policy_document" "sns_publish" {
