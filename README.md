@@ -1,6 +1,6 @@
 # AWS Threat Detection Baseline
 
-[![CI](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/ci.yml/badge.svg)](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/ci.yml)
+[![CI](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/terraform-checkov.yml/badge.svg)](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/terraform-checkov.yml)
 
 A threat-detection and alerting setup for AWS — **GuardDuty** +
 **Security Hub**, wired to a real notification pipeline with
