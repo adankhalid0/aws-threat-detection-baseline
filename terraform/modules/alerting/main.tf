@@ -11,6 +11,9 @@ data "aws_caller_identity" "current" {}
 # EventBridge, so events are silently rejected when they are delivered
 # to an encrypted topic.
 data "aws_iam_policy_document" "alerts_kms" {
+  #checkov:skip=CKV_AWS_109:In a KMS key policy "*" means this key itself; the account root statement is required so the key stays manageable.
+  #checkov:skip=CKV_AWS_111:Key policies cannot name the key in Resource; "*" refers only to this key.
+  #checkov:skip=CKV_AWS_356:Resource "*" in a key policy refers only to the key the policy is attached to.
   statement {
     sid       = "EnableAccountAdministration"
     effect    = "Allow"
