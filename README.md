@@ -1,5 +1,7 @@
 # AWS Threat Detection Baseline
 
+[![CI](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/ci.yml/badge.svg)](https://github.com/adankhalid0/aws-threat-detection-baseline/actions/workflows/ci.yml)
+
 A threat-detection and alerting setup for AWS — **GuardDuty** +
 **Security Hub**, wired to a real notification pipeline with
 **EventBridge** and **SNS**, deployed with **Terraform** and checked
