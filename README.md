@@ -1,9 +1,9 @@
 # AWS Threat Detection Baseline
 
-A managed threat-detection and alerting layer for AWS — **GuardDuty** +
+A threat-detection and alerting setup for AWS — **GuardDuty** +
 **Security Hub**, wired to a real notification pipeline with
-**EventBridge** and **SNS**, deployed with **Terraform** and enforced
-continuously with **GitHub Actions**.
+**EventBridge** and **SNS**, deployed with **Terraform** and checked
+on every push with **GitHub Actions**.
 
 > Companion project to
 > [aws-cloud-security-baseline](https://github.com/adankhalid0/aws-cloud-security-baseline).
@@ -26,7 +26,7 @@ This project:
    (continuous CIS 2.0 compliance monitoring + finding aggregation).
 2. **Builds** an EventBridge → SNS pipeline so findings actually reach an
    inbox instead of sitting unread in a console.
-3. **Proves** the pipeline works end-to-end using GuardDuty's own
+3. **Tests** that the pipeline works end-to-end using GuardDuty's own
    supported sample-finding mechanism — no real attack simulation, no
    unnecessary risk to the account.
 4. **Documents** what actually happened: timestamps, findings generated,
@@ -106,9 +106,26 @@ checkov -d terraform --config-file .checkov.yaml
 
 ## Results
 
-See [`docs/DETECTION_FINDINGS.md`](docs/DETECTION_FINDINGS.md) for the
-full documented run — sample findings generated, whether they reached
-Security Hub, and how long the alert email took to arrive.
+I ran the pipeline against a live AWS account in `eu-north-1` and generated
+GuardDuty sample findings (462 findings appeared in the account).
+
+- GuardDuty (with S3 protection) and Security Hub (CIS AWS Foundations
+  Benchmark 2.0) were enabled by Terraform.
+- **The first run did not deliver any alert emails.** A manual test message
+  published to the SNS topic arrived, so SNS and the email subscription were
+  fine. The problem was between EventBridge and SNS: the topic was encrypted
+  with the AWS-managed key `alias/aws/sns`, whose key policy does not allow
+  EventBridge to publish. The deliveries failed silently.
+- **Fix:** a customer-managed KMS key whose policy allows
+  `events.amazonaws.com`, used for the topic instead of the AWS-managed key.
+- **After the fix**, the alert arrived. The timestamps inside the message show
+  the finding being generated at `16:33:42Z` and the event sent at `16:33:47Z`,
+  about five seconds, and the email was received in the same minute.
+
+![Alert email for a GuardDuty sample finding](docs/images/03-alert-email.png)
+
+The screenshot is cropped: the full message is the raw finding JSON, which
+contains account and resource IDs.
 
 ## Cleanup
 
@@ -118,10 +135,19 @@ cd terraform/environments/dev && terraform destroy
 
 ## Lessons learned
 
-_Short personal reflection — filled in after actually running this
-against a live account: what surprised you, what you'd do differently in
-production, anything the documentation didn't quite prepare you for._
-
+- **Encrypted topics need a key policy that includes EventBridge.** The
+  AWS-managed SNS key cannot be used when EventBridge publishes to the topic.
+  The failure is silent, so I found it by testing the topic directly and then
+  looking at the encryption settings.
+- **The default alert is raw JSON.** EventBridge sends the whole event to SNS.
+  In a real setup I would add an input transformer to send a short, readable
+  message.
+- **Alert on severity, not on everything.** The GuardDuty rule sends every
+  finding. That is fine for a small test account but would be noisy in a real
+  one, where I would filter to medium severity and above.
+- **Check where the emails land.** The SNS subscription confirmation ended up
+  in the spam folder, so alerts can be missed in a private mailbox. A real
+  setup would use a shared mailbox or a chat integration.
 ## License
 
 MIT — see [LICENSE](LICENSE).
